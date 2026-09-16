@@ -1,37 +1,12 @@
-const CACHE = 'yaladia-shell-v1';
-const APP_SHELL = ['./', './index.html', './manifest.webmanifest'];
-
-self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(APP_SHELL)));
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))));
-  self.clients.claim();
-});
-
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
-  const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin) return;
-
-  // HTML: network first so published course updates appear quickly.
-  if (event.request.mode === 'navigate') {
-    event.respondWith(fetch(event.request).then(response => {
-      const copy = response.clone();
-      caches.open(CACHE).then(cache => cache.put('./index.html', copy));
-      return response;
-    }).catch(() => caches.match('./index.html')));
-    return;
-  }
-
-  // Images/assets: serve cached copy, then cache them on first use.
-  event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
-    if (response.ok) {
-      const copy = response.clone();
-      caches.open(CACHE).then(cache => cache.put(event.request, copy));
-    }
-    return response;
-  })));
+const CACHE="dia-bingo-pwa-1789601684192";
+const PRECACHE=["./icons/icon-192.png","./icons/icon-512.png","./images/branding/darklogo.png","./images/branding/whitelogo.png","./images/chat/cafe-breakfast-mistake.webp","./images/chat/family-siblings-photo.webp","./images/chat/family-travel-notebook.webp","./images/chat/hotel-cat-at-door.webp","./images/chat/hotel-window-view.webp","./images/chat/mateo-avatar.webp","./images/chat/mateo-seville-selfie.webp","./images/chat/old-student-cafe.webp","./images/chat/sofia-avatar.webp","./images/chat/sofia-seville-selfie.webp","./images/chat/ticket-machine.webp","./images/chat/university-office-closed.webp","./images/chat/university-office-open.webp","./images/lesson-banners/day-01.webp","./images/lesson-banners/day-02.webp","./images/lesson-banners/day-03.webp","./images/lesson-banners/day-04.webp","./images/lesson-banners/day-05.webp","./images/lesson-banners/day-06.webp","./images/lesson-banners/day-07.webp","./images/lesson-banners/day-08.webp","./images/lesson-banners/day-09.webp","./images/lesson-banners/day-10.webp","./images/lesson-banners/day-11.webp","./images/lesson-banners/day-12.webp","./images/lesson-banners/day-13.webp","./images/lesson-banners/day-14.webp","./images/lesson-banners/day-15.webp","./images/lesson-banners/day-16.webp","./images/lesson-banners/day-17.webp","./images/lesson-banners/day-18.webp","./images/lesson-banners/day-19.webp","./images/lesson-banners/day-20.webp","./images/lesson-banners/day-21.webp","./images/lesson-banners/day-22.webp","./images/lesson-banners/day-23.webp","./images/lesson-banners/day-24.webp","./images/lesson-banners/day-25.webp","./images/lesson-banners/day-26.webp","./images/lesson-banners/day-27.webp","./images/lesson-banners/day-28.webp","./images/pwa/icon-192.png","./images/pwa/icon-512.png","./index.html","./manifest.webmanifest"];
+self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(PRECACHE.map(path=>new URL(path,self.registration.scope).href))).then(()=>self.skipWaiting())));
+self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('dia-bingo-pwa-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
+self.addEventListener('fetch',event=>{
+ if(event.request.method!=='GET'||new URL(event.request.url).origin!==self.location.origin)return;
+ if(event.request.mode==='navigate'){
+  event.respondWith(fetch(event.request).then(response=>{const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy));return response}).catch(()=>caches.match(new URL('./index.html',self.registration.scope).href)));
+  return;
+ }
+ event.respondWith(caches.match(event.request).then(cached=>cached||fetch(event.request).then(response=>{if(response.ok){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy))}return response})));
 });
